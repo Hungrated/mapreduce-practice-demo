@@ -11,6 +11,13 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 
+
+/**
+ * WordCount
+ * <p>
+ * MapReduce WordCount的简单实例
+ */
+
 public class WordCount {
 
     private static final String IN = "hdfs://localhost:9000/wordcount/input/test.txt";
@@ -18,10 +25,8 @@ public class WordCount {
 
     public static void main(String[] args) throws Exception {
 
-        //设置环境变量HADOOP_USER_NAME，其值是root
-        //在本机调试
         System.setProperty("HADOOP_USER_NAME", "hungrated");
-        //读取配置文件
+
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", "hdfs://localhost:9000");
         conf.set("yarn.resourcemanager.hostname", "localhost");
@@ -29,11 +34,10 @@ public class WordCount {
         FileSystem fs = FileSystem.get(conf);
 
         Job job = Job.getInstance(conf, "Demo");
-        job.setJarByClass(WordCount.class); //主类
+        job.setJarByClass(WordCount.class);
 
         job.setMapperClass(TokenizerMapper.class);
 
-        //combine过程发生在map方法和reduce方法之间，它将中间结果进行了一次合并。
         job.setCombinerClass(IntSumReducer.class);
         job.setReducerClass(IntSumReducer.class);
 
@@ -56,7 +60,25 @@ public class WordCount {
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 
+    /**
+     * TokenizerMapper
+     * <p>
+     * 对文档进行Map操作类
+     */
+
     public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable> {
+
+        /**
+         * map
+         * <p>
+         * 重写map方法，将输入文档做拆词处理并输出给Reducer
+         *
+         * @param key     关键词
+         * @param value   待处理文本
+         * @param context 将输出的上下文
+         * @throws IOException          当读文件错误抛出该异常
+         * @throws InterruptedException 当被中断时抛出该异常
+         */
         @Override
         protected void map(Object key, Text value, Context context)
                 throws IOException, InterruptedException {
@@ -67,7 +89,25 @@ public class WordCount {
         }
     }
 
+    /**
+     * IntSumReducer
+     * <p>
+     * 对Map结果进行Reduce操作类
+     */
+
     public static class IntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+        /**
+         * reduce
+         * <p>
+         * 重写reduce方法，计算每个词出现次数总和
+         *
+         * @param key     关键词
+         * @param values  文本数组
+         * @param context 将输出的上下文
+         * @throws IOException          当读文件错误抛出该异常
+         * @throws InterruptedException 当被中断时抛出该异常
+         */
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context)
                 throws IOException, InterruptedException {
